@@ -1,0 +1,118 @@
+{% extends "admin/base_admin.html" %}
+
+{% block page_title %}Reviews{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">All Reviews</h5>
+            </div>
+            <div class="col-auto">
+                <form class="row g-3" method="GET">
+                    <div class="col-auto">
+                        <select class="form-select" name="status" onchange="this.form.submit()">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            <option value="new" {% if status_filter == 'new' %}selected{% endif %}>New</option>
+                            <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read</option>
+                            <option value="responded" {% if status_filter == 'responded' %}selected{% endif %}>Responded</option>
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <select class="form-select" name="rating" onchange="this.form.submit()">
+                            <option value="all" {% if rating_filter == 'all' %}selected{% endif %}>All Ratings</option>
+                            {% for i in range(5, 0, -1) %}
+                            <option value="{{ i }}" {% if rating_filter == i|string %}selected{% endif %}>
+                                {{ i }} Stars
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Rating</th>
+                        <th>Review</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews.items %}
+                    <tr>
+                        <td>{{ review.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ review.customer_name or 'Anonymous' }}</td>
+                        <td>
+                            {% for i in range(5) %}
+                            <i class="fas fa-star {% if i < review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                            {% endfor %}
+                        </td>
+                        <td>{{ review.text }}</td>
+                        <td>
+                            <span class="badge {% if review.status == 'new' %}bg-primary
+                                           {% elif review.status == 'read' %}bg-info
+                                           {% else %}bg-success{% endif %}">
+                                {{ review.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" title="Reply">
+                                <i class="fas fa-reply"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" title="Mark as Read">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if reviews.pages > 1 %}
+        <nav aria-label="Review pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if reviews.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.business_reviews', page=reviews.prev_num, status=status_filter, rating=rating_filter) }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in reviews.iter_pages(left_edge=2, left_current=2, right_current=2, right_edge=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == reviews.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.business_reviews', page=page_num, status=status_filter, rating=rating_filter) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if reviews.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.business_reviews', page=reviews.next_num, status=status_filter, rating=rating_filter) }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

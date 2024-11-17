@@ -1,0 +1,78 @@
+{% extends "admin/base_admin.html" %}
+
+{% block page_title %}Platform Overview{% endblock %}
+
+{% block admin_content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Businesses</h5>
+                <h2 class="card-text">{{ total_businesses }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Reviews</h5>
+                <h2 class="card-text">{{ total_reviews }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <h2 class="card-text">{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Registered Businesses</h5>
+        <button class="btn btn-primary btn-sm" onclick="location.href='{{ url_for('auth.create_business_admin') }}'">
+            <i class="fas fa-plus me-1"></i> Add Business
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Business Name</th>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Reviews</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for business in businesses %}
+                    <tr>
+                        <td>{{ business.name }}</td>
+                        <td>{{ business.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <span class="badge {% if business.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Active' if business.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ business.reviews|length }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Share Your Review | Keem Smile Dentistry{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header animate-in">
+        <div class="success-checkmark">
+            <i class="fas fa-check-circle fa-4x text-success mb-4"></i>
+        </div>
+        <h1>Thank You for Your Positive Review!</h1>
+        <p class="lead">Help others discover quality dental care by sharing your experience</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card animate-in">
+                <div class="card-body text-center">
+                    <!-- Primary Google Review Section -->
+                    <div class="mb-5">
+                        <h2 class="mb-4">Share on Google</h2>
+                        <p class="lead mb-4">Your review helps other patients find the care they need</p>
+                        
+                        <a href="https://www.google.com/maps/place/keem+smile+dentistry" target="_blank" 
+                           class="btn btn-primary btn-lg mb-3">
+                            <i class="fab fa-google me-2"></i>Write a Google Review
+                        </a>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <!-- Additional Social Media Options -->
+                    <div class="social-share">
+                        <h3 class="mb-4">Share on Other Platforms</h3>
+                        <div class="social-links d-flex justify-content-center gap-3">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u=https://keemsmile.com" 
+                               target="_blank" class="btn btn-lg btn-outline-primary">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="https://www.yelp.com/biz/keem-smile-dentistry" 
+                               target="_blank" class="btn btn-lg btn-outline-danger">
+                                <i class="fab fa-yelp"></i>
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?text=Great%20experience%20at%20Keem%20Smile%20Dentistry" 
+                               target="_blank" class="btn btn-lg btn-outline-info">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="https://www.instagram.com/keemsmile" 
+                               target="_blank" class="btn btn-lg btn-outline-purple">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-link text-muted">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.social-links .btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.social-links .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-outline-purple {
+    color: #E1306C;
+    border-color: #E1306C;
+}
+
+.btn-outline-purple:hover {
+    color: #fff;
+    background-color: #E1306C;
+    border-color: #E1306C;
+}
+
+.success-checkmark {
+    animation: fadeInDown 1s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Thank You | Modern Dental Care{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center min-vh-100 align-items-center">
+        <div class="col-md-8 text-center">
+            <div class="success-animation mb-4">
+                <i class="fas fa-check-circle fa-5x text-success"></i>
+            </div>
+            <h1 class="mb-4">Thank You for Your Feedback!</h1>
+            <p class="lead mb-4">We'll be in touch soon to share how we're addressing your feedback.</p>
+            <div class="mt-4">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-home me-2"></i>
+                    Return Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

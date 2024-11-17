@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Help Us Improve | Modern Dental Care{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header animate-in">
+        <h1>Help Us Improve</h1>
+        <p>We value your feedback and are committed to providing the best possible care</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card animate-in">
+                <div class="card-body">
+                    <div class="progress-steps mb-4">
+                        <div class="step active">
+                            <div class="step-number">1</div>
+                            <span class="d-none d-md-inline">Share your thoughts</span>
+                        </div>
+                    </div>
+
+                    <form id="feedback-form">
+                        <div class="mb-4">
+                            <label class="form-label">Which areas could we improve?</label>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="waitTime" name="areas[]" value="Wait Time">
+                                <label class="form-check-label" for="waitTime">Wait Time</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="communication" name="areas[]" value="Communication">
+                                <label class="form-check-label" for="communication">Communication</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="cleanliness" name="areas[]" value="Cleanliness">
+                                <label class="form-check-label" for="cleanliness">Cleanliness</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="treatment" name="areas[]" value="Treatment">
+                                <label class="form-check-label" for="treatment">Treatment</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="staff" name="areas[]" value="Staff">
+                                <label class="form-check-label" for="staff">Staff</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="other" name="areas[]" value="Other">
+                                <label class="form-check-label" for="other">Other</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="improvementFeedback" class="form-label">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                Additional Comments (Optional)
+                            </label>
+                            <textarea class="form-control" id="improvementFeedback" name="feedback" rows="4"
+                                placeholder="Feel free to provide any additional feedback..."></textarea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="button" class="btn btn-outline-secondary btn-lg me-2" id="skipButton">
+                                Skip
+                                <i class="fas fa-forward ms-2"></i>
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Next Step
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-muted">
+                    <i class="fas fa-lock me-2"></i>
+                    Your feedback helps us improve our service for everyone
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('feedback-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const feedback = document.getElementById('improvementFeedback').value.trim();
+    const areas = Array.from(document.querySelectorAll('input[name="areas[]"]:checked'))
+                      .map(cb => cb.value);
+    
+    try {
+        const response = await fetch('/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                feedback: feedback || "",  // Empty string if no feedback provided
+                areas: areas
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while submitting your feedback. Please try again.');
+    }
+});
+
+// Add skip button functionality
+document.getElementById('skipButton').addEventListener('click', async function() {
+    try {
+        const response = await fetch('/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                feedback: "",
+                areas: []
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='feedback.js') }}"></script>
+{% endblock %}

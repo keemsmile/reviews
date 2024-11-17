@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Share Your Experience | Keem Smile Dentistry{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header animate-in">
+        <h1>Share Your Experience</h1>
+        <p>Your feedback helps us provide better care for all our patients</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card animate-in">
+                <div class="card-body">
+                    <form id="review-form" method="POST" novalidate>
+                        <div class="mb-4 text-center">
+                            <label class="form-label d-block mb-3">How would you rate your visit? <span class="text-danger">*</span></label>
+                            <div class="star-rating-container">
+                                <div class="star-rating">
+                                    <i class="far fa-star" data-rating="1" data-bs-toggle="tooltip" title="Poor"></i>
+                                    <i class="far fa-star" data-rating="2" data-bs-toggle="tooltip" title="Fair"></i>
+                                    <i class="far fa-star" data-rating="3" data-bs-toggle="tooltip" title="Good"></i>
+                                    <i class="far fa-star" data-rating="4" data-bs-toggle="tooltip" title="Very Good"></i>
+                                    <i class="far fa-star" data-rating="5" data-bs-toggle="tooltip" title="Excellent"></i>
+                                </div>
+                                <div class="rating-labels mt-2">
+                                    <span class="rating-text">Select stars to rate</span>
+                                    <span class="rating-description text-muted"></span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="rating" id="rating" required>
+                        </div>
+
+                        <div class="mb-4 position-relative">
+                            <label for="feedback" class="form-label">Your Feedback <span class="text-danger">*</span></label>
+                            <div class="ai-write-container">
+                                <button type="button" class="btn btn-floating ai-write-btn">
+                                    <i class="fas fa-magic"></i>
+                                    <span>AI Write</span>
+                                </button>
+                            </div>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="4" 
+                                    placeholder="Tell us about your experience..." required></textarea>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.star-rating-container {
+    display: inline-block;
+    padding: 15px 25px;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.star-rating-container:hover {
+    background: #f0f1f2;
+}
+
+.star-rating {
+    font-size: 2.5rem;
+    color: #ffc107;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.star-rating i {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.star-rating i:hover {
+    transform: scale(1.2);
+}
+
+.star-rating i:hover ~ i {
+    opacity: 0.4;
+}
+
+.star-rating:hover i {
+    opacity: 0.4;
+}
+
+.star-rating i:hover {
+    opacity: 1;
+}
+
+.rating-labels {
+    min-height: 24px;
+}
+
+.rating-text {
+    font-size: 0.95rem;
+    color: #666;
+    display: block;
+}
+
+.rating-description {
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 4px;
+    min-height: 20px;
+}
+
+.animate-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* AI Write Button Styles */
+.ai-write-container {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+}
+
+.btn-floating.ai-write-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.btn-floating.ai-write-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: #f8f9fa;
+    color: #333;
+}
+
+.btn-floating.ai-write-btn i {
+    margin-right: 6px;
+    color: #007bff;
+}
+
+@media (max-width: 768px) {
+    .btn-floating.ai-write-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-floating.ai-write-btn span {
+        display: none;
+    }
+    
+    .btn-floating.ai-write-btn i {
+        margin-right: 0;
+    }
+
+    .star-rating {
+        font-size: 2rem;
+    }
+}
+
+/* Error states */
+.rating-error {
+    border: 2px solid rgba(220, 53, 69, 0.2);
+    background: rgba(220, 53, 69, 0.05);
+}
+
+/* Shake animation for error */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.shake-animation {
+    animation: shake 0.65s cubic-bezier(.36,.07,.19,.97) both;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.star-rating i');
+    const ratingText = document.querySelector('.rating-text');
+    const ratingDescription = document.querySelector('.rating-description');
+    const ratingInput = document.getElementById('rating');
+    const form = document.getElementById('review-form');
+    const starContainer = document.querySelector('.star-rating-container');
+    const feedbackTextarea = document.getElementById('feedback');
+    
+    const ratingDescriptions = {
+        1: {
+            text: 'Poor',
+            description: 'Significant room for improvement'
+        },
+        2: {
+            text: 'Fair',
+            description: 'Some aspects could be better'
+        },
+        3: {
+            text: 'Good',
+            description: 'Met expectations'
+        },
+        4: {
+            text: 'Very Good',
+            description: 'Above average experience'
+        },
+        5: {
+            text: 'Excellent',
+            description: 'Outstanding service all around'
+        }
+    };
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        if (!ratingInput.value) {
+            e.preventDefault();
+            
+            // Add error class to container
+            starContainer.classList.add('rating-error');
+            
+            // Show error message
+            ratingText.textContent = 'Please select a rating';
+            ratingText.classList.add('text-danger');
+            ratingDescription.textContent = 'Click the stars above to rate your experience';
+            
+            // Gentle shake animation
+            starContainer.classList.add('shake-animation');
+            setTimeout(() => {
+                starContainer.classList.remove('shake-animation');
+            }, 650);
+
+            // Scroll to rating section
+            starContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Check feedback
+        if (!feedbackTextarea.value.trim()) {
+            e.preventDefault();
+            feedbackTextarea.classList.add('is-invalid');
+        } else {
+            feedbackTextarea.classList.remove('is-invalid');
+        }
+    });
+
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            updateStars(rating);
+            ratingInput.value = rating;
+            
+            // Remove error states if present
+            starContainer.classList.remove('rating-error');
+            ratingText.classList.remove('text-danger');
+            
+            // Update text and description
+            ratingText.textContent = ratingDescriptions[rating].text;
+            ratingDescription.textContent = ratingDescriptions[rating].description;
+        });
+
+        // Show description on hover
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            if (!ratingInput.value) { // Only show preview if no rating selected
+                ratingText.textContent = ratingDescriptions[rating].text;
+                ratingDescription.textContent = ratingDescriptions[rating].description;
+            }
+        });
+    });
+
+    // Reset text if no star is selected
+    document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+        if (!ratingInput.value) {
+            ratingText.textContent = 'Select stars to rate';
+            ratingDescription.textContent = '';
+        } else {
+            const rating = parseInt(ratingInput.value);
+            ratingText.textContent = ratingDescriptions[rating].text;
+            ratingDescription.textContent = ratingDescriptions[rating].description;
+        }
+    });
+
+    function updateStars(rating) {
+        stars.forEach(star => {
+            const starRating = parseInt(star.dataset.rating);
+            if (starRating <= rating) {
+                star.classList.remove('far');
+                star.classList.add('fas');
+            } else {
+                star.classList.remove('fas');
+                star.classList.add('far');
+            }
+        });
+    }
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

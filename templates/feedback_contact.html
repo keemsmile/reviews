@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Follow Up | Keem Smile Dentistry{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header animate-in">
+        <h1>Thank You For Your Feedback</h1>
+        <p>We value your input and are committed to improving</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card animate-in">
+                <div class="card-body">
+                    <div class="progress-steps mb-4">
+                        <div class="step completed">
+                            <div class="step-number"><i class="fas fa-check"></i></div>
+                            <span class="d-none d-md-inline">Share thoughts</span>
+                        </div>
+                        <div class="step active">
+                            <div class="step-number">2</div>
+                            <span class="d-none d-md-inline">Contact info</span>
+                        </div>
+                    </div>
+
+                    <form id="contactForm">
+                        <div class="mb-4">
+                            <div class="form-check feedback-opt-in">
+                                <input class="form-check-input" type="checkbox" id="wantsContact" name="wantsContact">
+                                <label class="form-check-label" for="wantsContact">
+                                    <i class="fas fa-comment-dots me-2 text-primary"></i>
+                                    I'd like someone to follow up with me about my feedback
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="contactFields" style="display: none; opacity: 0; transition: opacity 0.3s ease-in-out;">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">
+                                    <i class="fas fa-user me-2"></i>
+                                    Your Name
+                                </label>
+                                <input type="text" class="form-control" id="name" name="name" placeholder="Your name" required disabled>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="contactInfo" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>
+                                    Contact Information
+                                </label>
+                                <input type="text" class="form-control" id="contactInfo" name="contactInfo" 
+                                    placeholder="Email or phone number" required disabled>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-phone me-2"></i>
+                                    Preferred Contact Method
+                                </label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="preferredContact" id="phone" value="phone" disabled>
+                                    <label class="btn btn-outline-primary" for="phone">Phone</label>
+
+                                    <input type="radio" class="btn-check" name="preferredContact" id="email" value="email" disabled>
+                                    <label class="btn btn-outline-primary" for="email">Email</label>
+
+                                    <input type="radio" class="btn-check" name="preferredContact" id="text" value="text" disabled>
+                                    <label class="btn btn-outline-primary" for="text">Text</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitButton">
+                                Submit Feedback
+                                <i class="fas fa-paper-plane ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-muted">
+                    <i class="fas fa-lock me-2"></i>
+                    Your privacy is important to us. We'll never share your information without permission.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('wantsContact').addEventListener('change', function() {
+    const contactFields = document.getElementById('contactFields');
+    const submitButton = document.getElementById('submitButton');
+    const fields = contactFields.querySelectorAll('input, .btn-check');
+    
+    if (this.checked) {
+        contactFields.style.display = 'block';
+        setTimeout(() => {
+            contactFields.style.opacity = '1';
+        }, 10);
+        fields.forEach(field => field.disabled = false);
+        submitButton.innerHTML = 'Submit & Contact Me <i class="fas fa-paper-plane ms-2"></i>';
+    } else {
+        contactFields.style.opacity = '0';
+        setTimeout(() => {
+            contactFields.style.display = 'none';
+        }, 300);
+        fields.forEach(field => field.disabled = true);
+        submitButton.innerHTML = 'Submit Feedback <i class="fas fa-paper-plane ms-2"></i>';
+    }
+});
+
+document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const wantsContact = document.getElementById('wantsContact').checked;
+    let formData = {
+        wantsContact: wantsContact
+    };
+    
+    if (wantsContact) {
+        const name = document.getElementById('name').value.trim();
+        const contactInfo = document.getElementById('contactInfo').value.trim();
+        const preferredContact = document.querySelector('input[name="preferredContact"]:checked')?.value;
+        
+        if (!name || !contactInfo || !preferredContact) {
+            alert('Please fill in all contact information');
+            return;
+        }
+        
+        formData = {
+            ...formData,
+            name,
+            contactInfo,
+            preferredContact
+        };
+    }
+    
+    try {
+        const response = await fetch('/feedback/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+});
+</script>
+
+<style>
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-group .btn {
+    flex: 1;
+}
+
+.animate-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.feedback-opt-in {
+    padding: 12px 15px;
+    border-radius: 8px;
+    background-color: rgba(13, 110, 253, 0.03);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.feedback-opt-in:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-color: rgba(13, 110, 253, 0.15);
+}
+
+.feedback-opt-in .form-check-input {
+    margin-top: 0.3em;
+}
+
+.feedback-opt-in .form-check-label {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.feedback-opt-in .fas {
+    opacity: 0.9;
+}
+</style>
+{% endblock %}

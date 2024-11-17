@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Local development
+instance/
+*.log
+reviews.json
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+coverage.xml
+*.cover

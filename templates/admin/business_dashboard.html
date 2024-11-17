@@ -1,0 +1,144 @@
+{% extends "admin/base_admin.html" %}
+
+{% block page_title %}Business Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total Reviews</h5>
+                <h2 class="card-text">{{ total_reviews }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Average Rating</h5>
+                <h2 class="card-text">
+                    {{ avg_rating }}
+                    <small class="text-muted">/ 5</small>
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">New Reviews</h5>
+                <h2 class="card-text">{{ new_reviews }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Recent Reviews</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Rating</th>
+                        <th>Review</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for review in reviews[:5] %}
+                    <tr>
+                        <td>{{ review.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ review.customer_name or 'Anonymous' }}</td>
+                        <td>
+                            {% for i in range(5) %}
+                            <i class="fas fa-star {% if i < review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                            {% endfor %}
+                        </td>
+                        <td>{{ review.text[:100] }}{% if review.text|length > 100 %}...{% endif %}</td>
+                        <td>
+                            <span class="badge {% if review.status == 'new' %}bg-primary
+                                           {% elif review.status == 'read' %}bg-info
+                                           {% else %}bg-success{% endif %}">
+                                {{ review.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-reply"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if reviews|length > 5 %}
+        <div class="text-center mt-3">
+            <a href="{{ url_for('admin.business_reviews') }}" class="btn btn-outline-primary">
+                View All Reviews
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Rating Distribution</h5>
+            </div>
+            <div class="card-body">
+                {% for rating in range(5, 0, -1) %}
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-2" style="width: 70px">
+                        {{ rating }} stars
+                    </div>
+                    {% set count = reviews|selectattr('rating', 'eq', rating)|list|length %}
+                    {% set percentage = (count / total_reviews * 100) if total_reviews > 0 else 0 %}
+                    <div class="progress flex-grow-1">
+                        <div class="progress-bar bg-warning" 
+                             role="progressbar" 
+                             style="width: {{ percentage }}%"
+                             aria-valuenow="{{ percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ count }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary">
+                        <i class="fas fa-download me-2"></i>
+                        Export Reviews
+                    </button>
+                    <button class="btn btn-outline-primary">
+                        <i class="fas fa-cog me-2"></i>
+                        Business Settings
+                    </button>
+                    <button class="btn btn-outline-primary">
+                        <i class="fas fa-users me-2"></i>
+                        Manage Team
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

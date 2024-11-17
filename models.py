@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy.dialects.sqlite import JSON
 
 db = SQLAlchemy()
 
@@ -35,7 +36,16 @@ class Review(db.Model):
     customer_name = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(20), default='new')  # new, read, responded
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     business_id = db.Column(db.Integer, db.ForeignKey('business.id'), nullable=False)
+    
+    # New fields
+    sentiment = db.Column(db.String(20), nullable=True)  # positive, negative, neutral
+    source = db.Column(db.String(50), nullable=True)  # google, yelp, direct, etc.
+    contact_info = db.Column(JSON, nullable=True)  # Stores contact details as JSON
+    improvement_feedback = db.Column(db.Text, nullable=True)
+    tags = db.Column(JSON, nullable=True)  # Stores tags as JSON array
+    priority = db.Column(db.String(20), default='normal')  # low, normal, high, urgent
     
     # Relationships
     business = db.relationship('Business', back_populates='reviews')

@@ -32,15 +32,14 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('main.index'))
+    return redirect(url_for('index'))
 
-# Platform admin only - create initial business admin
-@auth.route('/create_business_admin', methods=['GET', 'POST'])
+@auth.route('/create-business-admin', methods=['GET', 'POST'])
 @login_required
 def create_business_admin():
     if current_user.role != 'platform_admin':
-        flash('Access denied.')
-        return redirect(url_for('main.index'))
+        flash('Access denied. Platform admin only.')
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -56,7 +55,7 @@ def create_business_admin():
         new_user = User(
             email=email,
             name=name,
-            password=generate_password_hash(password, method='sha256'),
+            password=generate_password_hash(password),
             role='business_admin',
             business_id=business_id
         )
@@ -64,7 +63,7 @@ def create_business_admin():
         db.session.add(new_user)
         db.session.commit()
 
-        flash('Business admin created successfully')
+        flash('Business admin created successfully!')
         return redirect(url_for('admin.platform_dashboard'))
 
     return render_template('auth/create_business_admin.html')

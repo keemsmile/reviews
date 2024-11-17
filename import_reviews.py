@@ -1,4 +1,4 @@
-from app import app, db, client
+from app import app, db
 from models import Business, Review, ReviewResponse, User
 import json
 from datetime import datetime

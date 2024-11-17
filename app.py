@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import os
-import json
 from datetime import datetime
 from dotenv import load_dotenv
 from functools import wraps
@@ -9,12 +8,16 @@ from flask_login import LoginManager, current_user
 from models import db, User, Business, Review
 from auth import auth as auth_blueprint
 from admin import admin as admin_blueprint
+import openai
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.urandom(24))
+
+# Initialize OpenAI client
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///reviews.db'
@@ -78,6 +81,27 @@ class RateLimiter:
 
 rate_limiter = RateLimiter()
 
+# Rate limiting for OpenAI API
+OPENAI_RATE_LIMIT = {}
+MAX_REQUESTS_PER_MINUTE = 50  # Adjust based on your OpenAI plan
+RATE_LIMIT_WINDOW = 60  # seconds
+
+def check_rate_limit():
+    """Check if we're within OpenAI API rate limits."""
+    current_time = time.time()
+    # Clean up old entries
+    for timestamp in list(OPENAI_RATE_LIMIT.keys()):
+        if current_time - timestamp > RATE_LIMIT_WINDOW:
+            del OPENAI_RATE_LIMIT[timestamp]
+    
+    # Check if we're within limits
+    if len(OPENAI_RATE_LIMIT) >= MAX_REQUESTS_PER_MINUTE:
+        return False
+    
+    # Add current request
+    OPENAI_RATE_LIMIT[current_time] = True
+    return True
+
 def validate_review_data(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -107,93 +131,88 @@ def validate_review_data(f):
     return decorated_function
 
 def determine_sentiment(rating, feedback):
-    """Determine sentiment based on rating and feedback content."""
-    # Base sentiment on rating
-    if rating >= 4:
-        base_sentiment = 'positive'
-    elif rating <= 2:
-        base_sentiment = 'negative'
-    else:
-        base_sentiment = 'neutral'
-    
-    # Adjust based on feedback content
-    negative_words = {'bad', 'terrible', 'awful', 'horrible', 'worst', 'poor', 'disappointed', 'never', 'waste'}
-    positive_words = {'good', 'great', 'excellent', 'amazing', 'wonderful', 'best', 'love', 'perfect', 'recommend'}
-    
-    feedback_lower = feedback.lower()
-    neg_count = sum(1 for word in negative_words if word in feedback_lower)
-    pos_count = sum(1 for word in positive_words if word in feedback_lower)
-    
-    # Adjust sentiment if feedback strongly contradicts rating
-    if base_sentiment == 'positive' and neg_count > pos_count + 2:
-        return 'negative'
-    elif base_sentiment == 'negative' and pos_count > neg_count + 2:
-        return 'positive'
-    
-    return base_sentiment
+    """Determine sentiment using OpenAI, with robust error handling and rate limiting."""
+    if not os.getenv('OPENAI_API_KEY'):
+        print("ERROR: OpenAI API key not found!")
+        raise ValueError("OpenAI API key is required for sentiment analysis")
 
-def sync_json_to_db():
-    """Sync reviews from JSON file to database."""
+    if not check_rate_limit():
+        print("WARNING: OpenAI API rate limit reached, waiting...")
+        time.sleep(5)  # Wait 5 seconds before retrying
+        if not check_rate_limit():
+            raise Exception("Rate limit exceeded, please try again later")
+
     try:
-        # Get the first business (for now)
-        business = Business.query.first()
-        if not business:
-            print("No business found in database")
-            return
-
-        # Load JSON reviews
-        with open('reviews.json', 'r') as f:
-            json_reviews = json.load(f)
-
-        # Get existing review texts to avoid duplicates
-        existing_reviews = set(r.text for r in Review.query.all())
-
-        # Add new reviews to database
-        for review_data in json_reviews:
-            if review_data['feedback'] not in existing_reviews:
-                try:
-                    timestamp = datetime.fromisoformat(review_data['timestamp'])
-                except ValueError:
-                    timestamp = datetime.now()
-
-                db_review = Review(
-                    rating=review_data['rating'],
-                    text=review_data['feedback'],
-                    sentiment=review_data['sentiment'],
-                    business_id=business.id,
-                    created_at=timestamp,
-                    status='new',
-                    priority='normal' if review_data['rating'] >= 3 else 'high'
+        max_retries = 3
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                response = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a sentiment analysis expert. Analyze the following review and respond with ONLY one word: 'positive', 'neutral', or 'negative'."
+                        },
+                        {
+                            "role": "user",
+                            "content": feedback
+                        }
+                    ],
+                    temperature=0,
+                    max_tokens=1,
+                    timeout=10  # 10 second timeout
                 )
-                db.session.add(db_review)
-                existing_reviews.add(review_data['feedback'])
-
-        db.session.commit()
-        print(f"Successfully synced reviews to database")
+                
+                sentiment = response.choices[0].message.content.strip().lower()
+                
+                # Validate sentiment value
+                if sentiment not in ['positive', 'negative', 'neutral']:
+                    print(f"WARNING: Invalid sentiment '{sentiment}' from OpenAI, retrying...")
+                    raise ValueError("Invalid sentiment value")
+                
+                return sentiment
+                
+            except openai.RateLimitError:
+                print(f"WARNING: OpenAI rate limit hit, attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                else:
+                    raise
+                    
+            except openai.APITimeoutError:
+                print(f"WARNING: OpenAI API timeout, attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    raise
+                    
+            except ValueError as e:
+                print(f"WARNING: OpenAI returned invalid data, attempt {attempt + 1}/{max_retries}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    raise
+                
     except Exception as e:
-        print(f"Error syncing reviews: {e}")
-        db.session.rollback()
-
-def initialize_app():
-    """Initialize the application."""
-    # Create all database tables
-    db.create_all()
-    
-    # Create a default business if none exists
-    if not Business.query.first():
-        default_business = Business(
-            name="Keem Smile Dentistry",
-            is_active=True
-        )
-        db.session.add(default_business)
-        db.session.commit()
-    
-    # Sync reviews from JSON to database
-    sync_json_to_db()
-
-# Initialize the app when it starts
-with app.app_context():
-    initialize_app()
+        print(f"ERROR in OpenAI sentiment analysis: {str(e)}")
+        # Log the error with full context
+        error_context = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'rating': rating,
+            'feedback_length': len(feedback),
+            'timestamp': datetime.now().isoformat()
+        }
+        print(f"Error context: {error_context}")
+        
+        # Fallback to rating-based sentiment only if API completely fails
+        if rating >= 4:
+            return 'positive'
+        elif rating <= 2:
+            return 'negative'
+        return 'neutral'
 
 @app.route('/')
 def index():
@@ -210,33 +229,11 @@ def submit_review():
     rating = int(data.get('rating', 0))
     feedback = data.get('feedback', '').strip()
     
-    # Determine sentiment without API call
+    # Get sentiment from OpenAI
     sentiment = determine_sentiment(rating, feedback)
 
-    # Store the review with sentiment
-    review_data = {
-        'rating': rating,
-        'feedback': feedback,
-        'sentiment': sentiment,
-        'timestamp': datetime.now().isoformat(),
-        'contact_info': None  # Will be updated if user provides it later
-    }
-    
-    # Save to JSON file
     try:
-        with open('reviews.json', 'r') as f:
-            reviews = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        reviews = []
-    
-    reviews.append(review_data)
-    
-    with open('reviews.json', 'w') as f:
-        json.dump(reviews, f, indent=4)
-
-    # Save to database
-    try:
-        # For now, assign to the first business in the database
+        # Save directly to database
         business = Business.query.first()
         if business:
             db_review = Review(
@@ -246,14 +243,13 @@ def submit_review():
                 business_id=business.id,
                 created_at=datetime.now(),
                 status='new',
-                priority='normal' if rating >= 3 else 'high'
+                priority='high' if rating <= 2 else 'normal'
             )
             db.session.add(db_review)
             db.session.commit()
     except Exception as e:
         print(f"Error saving to database: {e}")
-        # Don't stop the flow if database save fails
-        pass
+        return jsonify({'error': 'Failed to save review'}), 500
 
     # Route based on rating AND sentiment
     if rating >= 4:  # Only 4 and 5 star reviews can potentially go to share
@@ -290,16 +286,14 @@ def feedback():
         improvement_areas = data.get('areas', [])
         
         try:
-            with open('reviews.json', 'r') as f:
-                reviews = json.load(f)
-            
             # Update the last review with improvement feedback
-            if reviews:
-                reviews[-1]['improvement_feedback'] = feedback
-                reviews[-1]['improvement_areas'] = improvement_areas
-                
-                with open('reviews.json', 'w') as f:
-                    json.dump(reviews, f, indent=4)
+            business = Business.query.first()
+            if business:
+                db_review = Review.query.filter_by(business_id=business.id).order_by(Review.created_at.desc()).first()
+                if db_review:
+                    db_review.improvement_feedback = feedback
+                    db_review.improvement_areas = improvement_areas
+                    db.session.commit()
         except Exception as e:
             print(f"Error storing feedback: {e}")
         
@@ -322,15 +316,13 @@ def feedback_contact():
         }
         
         try:
-            with open('reviews.json', 'r') as f:
-                reviews = json.load(f)
-            
             # Update the last review with contact information
-            if reviews:
-                reviews[-1]['contact_info'] = contact_info
-                
-                with open('reviews.json', 'w') as f:
-                    json.dump(reviews, f, indent=4)
+            business = Business.query.first()
+            if business:
+                db_review = Review.query.filter_by(business_id=business.id).order_by(Review.created_at.desc()).first()
+                if db_review:
+                    db_review.contact_info = contact_info
+                    db.session.commit()
                 
                 return jsonify({
                     'redirect': url_for('thank_you')
@@ -351,5 +343,11 @@ def thank_you():
 def goodbye():
     return render_template('goodbye.html')
 
+def initialize_app():
+    """Initialize the application."""
+    with app.app_context():
+        db.create_all()
+
 if __name__ == '__main__':
+    initialize_app()
     app.run(debug=True)
